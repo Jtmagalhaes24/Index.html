@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Código do Rei - Multiplayer com Operações</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        input, select, button { font-size: 18px; margin: 5px; padding: 10px; }
+        #feedback, #attempts, #questions-left, #turn { margin-top: 15px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h1>O Código do Rei - Multiplayer</h1>
+    <p>Descubra o código secreto antes do seu oponente!</p>
+
+    <h2 id="turn">Vez do Jogador 1</h2>
+    <input type="number" id="guess" min="100" max="999" placeholder="Digite o palpite">
+    <button onclick="checkCode()">Enviar Palpite</button>
+
+    <p>OU faça uma pergunta:</p>
+    <select id="question">
+        <option value="even">O último número é par?</option>
+        <option value="multiple3">É um múltiplo de 3?</option>
+        <option value="contains">Contém (um número específico)?</option>
+        <option value="greater">É maior do que (um número específico)?</option>
+        <option value="sum">A soma dos dígitos é igual a X?</option>
+        <option value="product">O produto dos dígitos é igual a X?</option>
+        <option value="difference">A diferença entre o maior e menor dígito é X?</option>
+        <option value="division">A divisão entre o primeiro e o último dígito dá X?</option>
+    </select>
+    <input type="number" id="question-value" min="0" max="999" placeholder="Valor">
+    <button onclick="askQuestion()">Perguntar</button>
+
+    <p id="feedback"></p>
+    <p id="attempts">Tentativas restantes: 10</p>
+    <p id="questions-left">Perguntas restantes: 3</p>
+
+    <script>
+        let secretCode = generateSecretCode();
+        let attempts = 10;
+        let questionsLeft = 3;
+        let currentPlayer = 1;
+
+        function generateSecretCode() {
+            return String(Math.floor(100 + Math.random() * 900)); // Número aleatório de 3 dígitos
+        }
+
+        function switchTurn() {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            document.getElementById("turn").textContent = "Vez do Jogador " + currentPlayer;
+        }
+
+        function checkCode() {
+            if (attempts <= 0) return alert("Acabaram as tentativas!");
+            let guess = document.getElementById("guess").value;
+            if (guess.length !== 3) {
+                alert("Digite um número de 3 dígitos!");
+                return;
+            }
+
+            attempts--;
+            document.getElementById("attempts").textContent = "Tentativas restantes: " + attempts;
+
+            if (guess === secretCode) {
+                document.getElementById("feedback").innerHTML = `🎉 O Jogador ${currentPlayer} venceu! O código era ${secretCode}!`;
+                alert(`Parabéns, Jogador ${currentPlayer}! Você é o Rei!`);
+                return;
+            }
+
+            let feedback = "";
+            for (let i = 0; i < 3; i++) {
+                if (guess[i] === secretCode[i]) {
+                    feedback += `✅ ${guess[i]} `;
+                } else if (secretCode.includes(guess[i])) {
+                    feedback += `⚠️ ${guess[i]} `;
+                } else {
+                    feedback += `❌ ${guess[i]} `;
+                }
+            }
+            document.getElementById("feedback").innerHTML = feedback;
+
+            if (attempts === 0) {
+                alert(`Fim do jogo! O código secreto era ${secretCode}`);
+            } else {
+                switchTurn();
+            }
+        }
+
+        function askQuestion() {
+            if (attempts <= 0) return alert("Acabaram as tentativas!");
+            if (questionsLeft <= 0) return alert("Sem perguntas restantes!");
+
+            let questionType = document.getElementById("question").value;
+            let questionValue = parseInt(document.getElementById("question-value").value);
+            let response = "";
+
+            let digits = secretCode.split("").map(Number); // Transforma o código em um array de números
+            let sum = digits.reduce((a, b) => a + b, 0);
+            let product = digits.reduce((a, b) => a * b, 1);
+            let maxDigit = Math.max(...digits);
+            let minDigit = Math.min(...digits);
+            let firstDigit = digits[0];
+            let lastDigit = digits[2];
+
+            if (questionType === "even") {
+                response = (lastDigit % 2 === 0) ? "Sim, o último número é par." : "Não, é ímpar.";
+            } else if (questionType === "multiple3") {
+                response = (parseInt(secretCode) % 3 === 0) ? "Sim, é um múltiplo de 3." : "Não, não é.";
+            } else if (questionType === "contains") {
+                response = secretCode.includes(questionValue) ? `Sim, contém o número ${questionValue}.` : `Não, não contém ${questionValue}.`;
+            } else if (questionType === "greater") {
+                response = (parseInt(secretCode) > questionValue) ? "Sim, é maior." : "Não, é menor ou igual.";
+            } else if (questionType === "sum") {
+                response = (sum === questionValue) ? "Sim, a soma é igual." : "Não, a soma é diferente.";
+            } else if (questionType === "product") {
+                response = (product === questionValue) ? "Sim, o produto é igual." : "Não, o produto é diferente.";
+            } else if (questionType === "difference") {
+                response = (maxDigit - minDigit === questionValue) ? "Sim, a diferença é igual." : "Não, a diferença é diferente.";
+            } else if (questionType === "division") {
+                response = (firstDigit / lastDigit === questionValue) ? "Sim, a divisão é exata." : "Não, a divisão não é exata.";
+            }
+
+            attempts--;
+            questionsLeft--;
+            document.getElementById("attempts").textContent = "Tentativas restantes: " + attempts;
+            document.getElementById("questions-left").textContent = "Perguntas restantes: " + questionsLeft;
+            document.getElementById("feedback").innerHTML = response;
+
+            if (attempts === 0) {
+                alert(`Fim do jogo! O código secreto era ${secretCode}`);
+            } else {
+                switchTurn();
+            }
+        }
+    </script>
+</body>
+</html>
